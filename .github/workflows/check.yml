@@ -1,0 +1,38 @@
+name: Wohnservice Watch (30min)
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # alle 30 Minuten (UTC)
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - run: pip install requests
+
+      # Persistente Merkliste zwischen Läufen
+      - name: Restore seen cache
+        uses: actions/cache@v4
+        with:
+          path: .seen_cache
+          key: seen-cache
+          restore-keys: |
+            seen-cache
+
+      - name: Run watcher
+        env:
+          NTFY_URL: ${{ secrets.NTFY_URL }}
+        run: python watch.py
+
+      - name: Save seen cache
+        uses: actions/cache@v4
+        with:
+          path: .seen_cache
+          key: seen-cache
